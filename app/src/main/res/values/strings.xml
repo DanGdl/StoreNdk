@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Store</string>
+    <string name="save_or_retrieve">Save or retrieve value from the store</string>
+    <string name="key">Key</string>
+    <string name="key_input">Enter key</string>
+    <string name="value">Value</string>
+    <string name="value_input">Enter value</string>
+    <string name="type">Type</string>
+    <string name="select_type">Select type</string>
+    <string name="set_value">Set value</string>
+    <string name="get_value">Get value</string>
+    <string name="done">Done</string>
+    <string name="too_long_string">String is too long</string>
+</resources>
