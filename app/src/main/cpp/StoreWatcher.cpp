@@ -118,7 +118,7 @@ void* runWatcher(void* pArgs) {
             // Начало критической секции может выполняться только в одном потоке.
             // Здесь записи не могут добавляться или изменяться.
             lEnv->MonitorEnter(lWatcher->mStoreFront);
-            StoreEntry* lEntryEnd = lWatcher->mStore->mEntries + lWatcher->mStore->mLength;
+            StoreEntry* lEntryEnd = lEntry + lWatcher->mStore->mLength;
             lRunning = (lWatcher->mState == STATE_OK);
             lScanning = (lEntry < lEntryEnd);
             if (lRunning && lScanning) {
@@ -127,7 +127,7 @@ void* runWatcher(void* pArgs) {
             // Конец критической секции.
             lEnv->MonitorExit(lWatcher->mStoreFront);
             // Перейти к следующей записи.
-            ++lEntry;
+            lEntry++;
         }
     }
     lJavaVM->DetachCurrentThread();

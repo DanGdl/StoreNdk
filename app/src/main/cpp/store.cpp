@@ -650,15 +650,17 @@ extern "C" {
         startWatcher(env, &mStoreWatcher, &mStore, instance);
     }
 
-    JNIEXPORT jshortArray JNICALL
+    JNIEXPORT void JNICALL
     Java_com_packtub_Store_finalizeStore(JNIEnv *env, jobject instance) {
         stopWatcher(env, &mStoreWatcher);
         StoreEntry* lEntry = mStore.mEntries;
         StoreEntry* lEntryEnd = lEntry + mStore.mLength;
         while (lEntry < lEntryEnd) {
-            delete[] lEntry->mKey;
-            releaseEntryValue(env, lEntry);
-            ++lEntry;
+            if(lEntry != NULL) {
+                delete[] lEntry->mKey;
+                releaseEntryValue(env, lEntry);
+            }
+            lEntry++;
         }
         mStore.mLength = 0;
     }

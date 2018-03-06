@@ -110,5 +110,5 @@ public class Store {
     public synchronized native short[] getShortArray(String key);
 
     public native void initializeStore();
-    public native short[] finalizeStore();
+    public native void finalizeStore();
 }
