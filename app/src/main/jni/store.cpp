@@ -10,12 +10,91 @@
 #include <string.h>
 #include <stdint.h>
 
-static Store mStore = { {}, 0 };
+static Store mStore;
 static StoreWatcher mStoreWatcher;
+//static jmethodID MethodOnSuccessInt;
+//static jmethodID MethodOnSuccessString;
+//static jmethodID MethodOnSuccessColor;
+static jclass StringClass;
+static jclass ColorClass;
+static jobject gLock;
+
 extern "C" {
+
     JNIEXPORT jint JNICALL
-    Java_com_packtub_Store_getInteger(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    JNI_OnLoad(JavaVM* pVM, void* reserved) {
+        JNIEnv *env;
+        if (pVM->GetEnv((void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+            return -1;
+        }
+        const jclass StringClassTmp = env->FindClass("java/lang/String");
+        if (StringClassTmp == NULL) {
+            return -1;
+        }
+        StringClass = (jclass) env->NewGlobalRef(StringClassTmp);
+        env->DeleteLocalRef(StringClassTmp);
+        const jclass ColorClassTmp = env->FindClass("com/mdgd/storeapp/dto/Color");
+        if (ColorClassTmp == NULL) {
+            return -1;
+        }
+        ColorClass = (jclass) env->NewGlobalRef(ColorClassTmp);
+        env->DeleteLocalRef(ColorClassTmp);
+
+        // Кэшировать методы.
+//        const jclass StoreClass = env->FindClass("com/mdgd/storeapp/dto/Store");
+//        if (StoreClass == NULL) {
+//            return -1;
+//        }
+//        MethodOnSuccessInt = env->GetMethodID(StoreClass, "onAlert", "(I)V");
+//        if (MethodOnSuccessInt == NULL) {
+//            return -1;
+//        }
+//        MethodOnSuccessString = env->GetMethodID(StoreClass, "onAlert", "(Ljava/lang/String;)V");
+//        if (MethodOnSuccessString == NULL) {
+//            return -1;
+//        }
+//        MethodOnSuccessColor = env->GetMethodID(StoreClass, "onAlert", "(Lcom/mdgd/storeapp/dto/Color;)V");
+//        if (MethodOnSuccessColor == NULL) {
+//            return -1;
+//        }
+        //env->DeleteLocalRef(StoreClass);
+
+        const jclass ObjectClass = env->FindClass("java/lang/Object");
+        if (ObjectClass == NULL) {
+            return -1;
+        }
+        const jmethodID ObjectConstructor = env->GetMethodID(ObjectClass, "<init>", "()V");
+        if (ObjectConstructor == NULL) {
+            return -1;
+        }
+        const jobject lockTmp = env->NewObject(ObjectClass, ObjectConstructor);
+        env->DeleteLocalRef(ObjectClass);
+        gLock = env->NewGlobalRef(lockTmp);
+        env->DeleteLocalRef(lockTmp);
+
+        const jclass StoreThreadSafeClass = env->FindClass("com/mdgd/storeapp/dto/StoreThreadSafe");
+        if (StoreThreadSafeClass == NULL) {
+            return -1;
+        }
+        const jfieldID lockField = env->GetStaticFieldID(StoreThreadSafeClass, "LOCK", "Ljava/lang/Object;");
+        if (lockField == NULL) {
+            return -1;
+        }
+        env->SetStaticObjectField(StoreThreadSafeClass, lockField, gLock);
+        env->DeleteLocalRef(StoreThreadSafeClass);
+
+        mStore.mLength = 0;
+        return JNI_VERSION_1_6;
+    }
+
+    JNIEXPORT jint JNICALL
+    Java_com_mdgd_storeapp_dto_Store_getCount(JNIEnv *pEnv, jobject pThis) {
+        return mStore.mLength;
+    }
+
+    JNIEXPORT jint JNICALL
+    Java_com_mdgd_storeapp_dto_Store_getInteger(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_Integer)) {
             return lEntry->mValue.mInteger;
         }
@@ -25,17 +104,18 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setInteger(JNIEnv *pEnv, jobject pThis, jstring pKey, jint pInteger) {
+    Java_com_mdgd_storeapp_dto_Store_setInteger(JNIEnv *pEnv, jobject pThis, jstring pKey, jint pInteger) {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry != NULL) {
             lEntry->mType = StoreType_Integer;
             lEntry->mValue.mInteger = pInteger;
+            //pEnv->CallVoidMethod(pThis, MethodOnSuccessInt, (jint) lEntry->mValue.mInteger);
         }
     }
 
     JNIEXPORT jstring JNICALL
-    Java_com_packtub_Store_getString(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getString(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_String)) {
             return pEnv->NewStringUTF(lEntry->mValue.mString);
         }
@@ -45,7 +125,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setString(JNIEnv *pEnv, jobject pThis, jstring pKey, jstring pString) {
+    Java_com_mdgd_storeapp_dto_Store_setString(JNIEnv *pEnv, jobject pThis, jstring pKey, jstring pString) {
         const char* lStringTmp = pEnv->GetStringUTFChars(pString, NULL);
         if (lStringTmp == NULL) {
             return;
@@ -61,8 +141,8 @@ extern "C" {
     }
 
     JNIEXPORT jboolean JNICALL
-    Java_com_packtub_Store_getBoolean(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getBoolean(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_Bool)) {
             return lEntry->mValue.mBool;
         }
@@ -72,7 +152,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setBoolean(JNIEnv *pEnv, jobject pThis, jstring pKey, jboolean pBool) {
+    Java_com_mdgd_storeapp_dto_Store_setBoolean(JNIEnv *pEnv, jobject pThis, jstring pKey, jboolean pBool) {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry != NULL) {
             lEntry->mType = StoreType_Bool;
@@ -81,8 +161,8 @@ extern "C" {
     }
 
     JNIEXPORT jbyte JNICALL
-    Java_com_packtub_Store_getByte(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getByte(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_Byte)) {
             return lEntry->mValue.mByte;
         }
@@ -92,7 +172,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setByte(JNIEnv *pEnv, jobject pThis, jstring pKey, jbyte pByte) {
+    Java_com_mdgd_storeapp_dto_Store_setByte(JNIEnv *pEnv, jobject pThis, jstring pKey, jbyte pByte) {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry != NULL) {
             lEntry->mType = StoreType_Byte;
@@ -101,8 +181,8 @@ extern "C" {
     }
 
     JNIEXPORT jchar JNICALL
-    Java_com_packtub_Store_getChar(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getChar(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_Char)) {
             return lEntry->mValue.mChar;
         }
@@ -112,7 +192,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setChar(JNIEnv *pEnv, jobject pThis, jstring pKey, jchar pChar) {
+    Java_com_mdgd_storeapp_dto_Store_setChar(JNIEnv *pEnv, jobject pThis, jstring pKey, jchar pChar) {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry != NULL) {
             lEntry->mType = StoreType_Char;
@@ -121,8 +201,8 @@ extern "C" {
     }
 
     JNIEXPORT jdouble JNICALL
-    Java_com_packtub_Store_getDouble(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getDouble(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_Double)) {
             return lEntry->mValue.mDouble;
         }
@@ -132,7 +212,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setDouble(JNIEnv *pEnv, jobject pThis, jstring pKey, jdouble pDouble) {
+    Java_com_mdgd_storeapp_dto_Store_setDouble(JNIEnv *pEnv, jobject pThis, jstring pKey, jdouble pDouble) {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry != NULL) {
             lEntry->mType = StoreType_Double;
@@ -141,8 +221,8 @@ extern "C" {
     }
 
     JNIEXPORT jfloat JNICALL
-    Java_com_packtub_Store_getFloat(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getFloat(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_Float)) {
             return lEntry->mValue.mFloat;
         }
@@ -152,7 +232,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setFloat(JNIEnv *pEnv, jobject pThis, jstring pKey, jfloat pFloat) {
+    Java_com_mdgd_storeapp_dto_Store_setFloat(JNIEnv *pEnv, jobject pThis, jstring pKey, jfloat pFloat) {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry != NULL) {
             lEntry->mType = StoreType_Float;
@@ -161,8 +241,8 @@ extern "C" {
     }
 
     JNIEXPORT jlong JNICALL
-    Java_com_packtub_Store_getLong(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getLong(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_Long)) {
             return lEntry->mValue.mLong;
         }
@@ -172,7 +252,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setLong(JNIEnv *pEnv, jobject pThis, jstring pKey, jlong pLong) {
+    Java_com_mdgd_storeapp_dto_Store_setLong(JNIEnv *pEnv, jobject pThis, jstring pKey, jlong pLong) {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry != NULL) {
             lEntry->mType = StoreType_Long;
@@ -181,8 +261,8 @@ extern "C" {
     }
 
     JNIEXPORT jshort JNICALL
-    Java_com_packtub_Store_getShort(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getShort(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_Short)) {
             return lEntry->mValue.mShort;
         }
@@ -192,7 +272,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setShort(JNIEnv *pEnv, jobject pThis, jstring pKey, jshort pShort) {
+    Java_com_mdgd_storeapp_dto_Store_setShort(JNIEnv *pEnv, jobject pThis, jstring pKey, jshort pShort) {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry != NULL) {
             lEntry->mType = StoreType_Short;
@@ -201,8 +281,8 @@ extern "C" {
     }
 
     JNIEXPORT jobject JNICALL
-    Java_com_packtub_Store_getColor(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getColor(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry *lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_Color)) {
             return lEntry->mValue.mColor;
         }
@@ -212,7 +292,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setColor(JNIEnv *pEnv, jobject pThis, jstring pKey, jobject pColor) {
+    Java_com_mdgd_storeapp_dto_Store_setColor(JNIEnv *pEnv, jobject pThis, jstring pKey, jobject pColor) {
         jobject lColor = pEnv->NewGlobalRef(pColor);
         if (lColor == NULL) {
             return;
@@ -228,10 +308,10 @@ extern "C" {
     }
 
     JNIEXPORT jintArray JNICALL
-    Java_com_packtub_Store_getIntArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getIntArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if(isEntryValid(pEnv, lEntry, StoreType_IntArray)){
-            jintArray lJavaArray = pEnv->NewIntArray(lEntry->mLength);
+            const jintArray lJavaArray = pEnv->NewIntArray(lEntry->mLength);
             if (lJavaArray == NULL) {
                 return NULL;
             }
@@ -242,8 +322,8 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setIntArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jintArray pIntArray) {
-        jsize lLength = pEnv->GetArrayLength(pIntArray);
+    Java_com_mdgd_storeapp_dto_Store_setIntArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jintArray pIntArray) {
+        const jsize lLength = pEnv->GetArrayLength(pIntArray);
         int32_t* lArray = new int32_t[lLength * sizeof(int32_t)];
         pEnv->GetIntArrayRegion(pIntArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
@@ -263,15 +343,14 @@ extern "C" {
     }
 
     JNIEXPORT jobjectArray JNICALL
-    Java_com_packtub_Store_getColorArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getColorArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_ColorArray)) {
-            jclass lColorClass = pEnv->FindClass("com/packtpub/Color");
-            if (lColorClass == NULL) {
+            if (ColorClass == NULL) {
                 return NULL;
             }
-            jobjectArray lJavaArray = pEnv->NewObjectArray(lEntry->mLength, lColorClass, NULL);
-            pEnv->DeleteLocalRef(lColorClass);
+            const jobjectArray lJavaArray = pEnv->NewObjectArray(lEntry->mLength, ColorClass, NULL);
+            pEnv->DeleteLocalRef(ColorClass);
             if (lJavaArray == NULL) {
                 return NULL;
             }
@@ -290,12 +369,12 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setColorArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jobjectArray pColorArray) {
-        jsize lLength = pEnv->GetArrayLength(pColorArray);
+    Java_com_mdgd_storeapp_dto_Store_setColorArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jobjectArray pColorArray) {
+        const jsize lLength = pEnv->GetArrayLength(pColorArray);
         jobject* lArray = new jobject[lLength * sizeof(jobject)];
         int32_t i, j;
         for (i = 0; i < lLength; ++i) {
-            jobject lLocalColor = pEnv->GetObjectArrayElement(pColorArray, i);
+            const jobject lLocalColor = pEnv->GetObjectArrayElement(pColorArray, i);
             if (lLocalColor == NULL) {
                 for (j = 0; j < i; ++j) {
                     pEnv->DeleteGlobalRef(lArray[j]);
@@ -329,8 +408,8 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setBoolArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jbooleanArray pBoolArray) {
-        jsize lLength = pEnv->GetArrayLength(pBoolArray);
+    Java_com_mdgd_storeapp_dto_Store_setBoolArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jbooleanArray pBoolArray) {
+        const jsize lLength = pEnv->GetArrayLength(pBoolArray);
         uint8_t* lArray = new uint8_t[lLength * sizeof(uint8_t)];
         pEnv->GetBooleanArrayRegion(pBoolArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
@@ -350,10 +429,10 @@ extern "C" {
     }
 
     JNIEXPORT jbooleanArray JNICALL
-    Java_com_packtub_Store_getBoolArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getBoolArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if(isEntryValid(pEnv, lEntry, StoreType_BoolArray)){
-            jbooleanArray lJavaArray = pEnv->NewBooleanArray(lEntry->mLength);
+            const jbooleanArray lJavaArray = pEnv->NewBooleanArray(lEntry->mLength);
             if (lJavaArray == NULL) {
                 return NULL;
             }
@@ -364,8 +443,8 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setByteArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jbyteArray pByteArray) {
-        jsize lLength = pEnv->GetArrayLength(pByteArray);
+    Java_com_mdgd_storeapp_dto_Store_setByteArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jbyteArray pByteArray) {
+        const jsize lLength = pEnv->GetArrayLength(pByteArray);
         int8_t* lArray = new int8_t[lLength * sizeof(int8_t)];
         pEnv->GetByteArrayRegion(pByteArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
@@ -385,10 +464,10 @@ extern "C" {
     }
 
     JNIEXPORT jbyteArray JNICALL
-    Java_com_packtub_Store_getByteArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getByteArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if(isEntryValid(pEnv, lEntry, StoreType_ByteArray)){
-            jbyteArray lJavaArray = pEnv->NewByteArray(lEntry->mLength);
+            const jbyteArray lJavaArray = pEnv->NewByteArray(lEntry->mLength);
             if (lJavaArray == NULL) {
                 return NULL;
             }
@@ -399,8 +478,8 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setCharArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jcharArray pCharArray) {
-        jsize lLength = pEnv->GetArrayLength(pCharArray);
+    Java_com_mdgd_storeapp_dto_Store_setCharArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jcharArray pCharArray) {
+        const jsize lLength = pEnv->GetArrayLength(pCharArray);
         uint16_t* lArray = new uint16_t[lLength * sizeof(uint16_t)];
         pEnv->GetCharArrayRegion(pCharArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
@@ -420,10 +499,10 @@ extern "C" {
     }
 
     JNIEXPORT jcharArray JNICALL
-    Java_com_packtub_Store_getCharArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getCharArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if(isEntryValid(pEnv, lEntry, StoreType_CharArray)){
-            jcharArray lJavaArray = pEnv->NewCharArray(lEntry->mLength);
+            const jcharArray lJavaArray = pEnv->NewCharArray(lEntry->mLength);
             if (lJavaArray == NULL) {
                 return NULL;
             }
@@ -434,8 +513,8 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setDoubleArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jdoubleArray pDoubleArray) {
-        jsize lLength = pEnv->GetArrayLength(pDoubleArray);
+    Java_com_mdgd_storeapp_dto_Store_setDoubleArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jdoubleArray pDoubleArray) {
+        const jsize lLength = pEnv->GetArrayLength(pDoubleArray);
         double* lArray = new double[lLength * sizeof(double)];
         pEnv->GetDoubleArrayRegion(pDoubleArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
@@ -455,10 +534,10 @@ extern "C" {
     }
 
     JNIEXPORT jdoubleArray JNICALL
-    Java_com_packtub_Store_getDoubleArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getDoubleArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if(isEntryValid(pEnv, lEntry, StoreType_DoubleArray)){
-            jdoubleArray lJavaArray = pEnv->NewDoubleArray(lEntry->mLength);
+            const jdoubleArray lJavaArray = pEnv->NewDoubleArray(lEntry->mLength);
             if (lJavaArray == NULL) {
                 return NULL;
             }
@@ -469,8 +548,8 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setFloatArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jfloatArray pFloatArray) {
-        jsize lLength = pEnv->GetArrayLength(pFloatArray);
+    Java_com_mdgd_storeapp_dto_Store_setFloatArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jfloatArray pFloatArray) {
+        const jsize lLength = pEnv->GetArrayLength(pFloatArray);
         float* lArray = new float[lLength * sizeof(float)];
         pEnv->GetFloatArrayRegion(pFloatArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
@@ -490,10 +569,10 @@ extern "C" {
     }
 
     JNIEXPORT jfloatArray JNICALL
-    Java_com_packtub_Store_getFloatArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getFloatArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if(isEntryValid(pEnv, lEntry, StoreType_FloatArray)){
-            jfloatArray lJavaArray = pEnv->NewFloatArray(lEntry->mLength);
+            const jfloatArray lJavaArray = pEnv->NewFloatArray(lEntry->mLength);
             if (lJavaArray == NULL) {
                 return NULL;
             }
@@ -504,8 +583,8 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setLongArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jlongArray pLongArray) {
-        jsize lLength = pEnv->GetArrayLength(pLongArray);
+    Java_com_mdgd_storeapp_dto_Store_setLongArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jlongArray pLongArray) {
+        const jsize lLength = pEnv->GetArrayLength(pLongArray);
         int64_t* lArray = new int64_t[lLength * sizeof(int64_t)];
         pEnv->GetLongArrayRegion(pLongArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
@@ -525,10 +604,10 @@ extern "C" {
     }
 
     JNIEXPORT jlongArray JNICALL
-    Java_com_packtub_Store_getLongArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getLongArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if(isEntryValid(pEnv, lEntry, StoreType_LongArray)){
-            jlongArray lJavaArray = pEnv->NewLongArray(lEntry->mLength);
+            const jlongArray lJavaArray = pEnv->NewLongArray(lEntry->mLength);
             if (lJavaArray == NULL) {
                 return NULL;
             }
@@ -539,8 +618,8 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setShortArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jshortArray pShortArray) {
-        jsize lLength = pEnv->GetArrayLength(pShortArray);
+    Java_com_mdgd_storeapp_dto_Store_setShortArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jshortArray pShortArray) {
+        const jsize lLength = pEnv->GetArrayLength(pShortArray);
         int16_t* lArray = new int16_t[lLength * sizeof(int16_t)];
         pEnv->GetShortArrayRegion(pShortArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
@@ -560,10 +639,10 @@ extern "C" {
     }
 
     JNIEXPORT jshortArray JNICALL
-    Java_com_packtub_Store_getShortArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getShortArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if(isEntryValid(pEnv, lEntry, StoreType_ShortArray)){
-            jshortArray lJavaArray = pEnv->NewShortArray(lEntry->mLength);
+            const jshortArray lJavaArray = pEnv->NewShortArray(lEntry->mLength);
             if (lJavaArray == NULL) {
                 return NULL;
             }
@@ -574,12 +653,12 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_setStringArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jobjectArray pStringArray) {
-        jsize lLength = pEnv->GetArrayLength(pStringArray);
+    Java_com_mdgd_storeapp_dto_Store_setStringArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jobjectArray pStringArray) {
+        const jsize lLength = pEnv->GetArrayLength(pStringArray);
         char** lArray = new char*[lLength * sizeof(char*)];
         int32_t i, j;
         for (i = 0; i < lLength; ++i) {
-            jstring obj = (jstring)pEnv->GetObjectArrayElement(pStringArray, i);
+            const jstring obj = (jstring)pEnv->GetObjectArrayElement(pStringArray, i);
             if (obj == NULL) {
                 for (j = 0; j < i; ++j) {
                     delete[] lArray[j];
@@ -588,7 +667,7 @@ extern "C" {
                 return;
             }
             const char* lStringTmp = pEnv->GetStringUTFChars(obj, NULL);
-            jsize lStringLength = pEnv->GetStringUTFLength(obj);
+            const jsize lStringLength = pEnv->GetStringUTFLength(obj);
             char* lLocalStr = new char[(sizeof(char) * (lStringLength + 1))];
             strcpy(lLocalStr, lStringTmp);
             lArray[i] = lLocalStr;
@@ -617,21 +696,20 @@ extern "C" {
     }
 
     JNIEXPORT jobjectArray JNICALL
-    Java_com_packtub_Store_getStringArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
-        StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
+    Java_com_mdgd_storeapp_dto_Store_getStringArray(JNIEnv *pEnv, jobject pThis, jstring pKey) {
+        const StoreEntry* lEntry = findEntry(pEnv, &mStore, pKey);
         if (isEntryValid(pEnv, lEntry, StoreType_StringArray)) {
-            jclass lColorClass = pEnv->FindClass("java/lang/String");
-            if (lColorClass == NULL) {
+            if (StringClass == NULL) {
                 return NULL;
             }
-            jobjectArray lJavaArray = pEnv->NewObjectArray(lEntry->mLength, lColorClass, NULL);
-            pEnv->DeleteLocalRef(lColorClass);
+            const jobjectArray lJavaArray = pEnv->NewObjectArray(lEntry->mLength, StringClass, NULL);
+            pEnv->DeleteLocalRef(StringClass);
             if (lJavaArray == NULL) {
                 return NULL;
             }
             int32_t i;
             for (i = 0; i < lEntry->mLength; ++i) {
-                jstring str = pEnv->NewStringUTF(lEntry->mValue.mStringArray[i]);
+                const jstring str = pEnv->NewStringUTF(lEntry->mValue.mStringArray[i]);
                 pEnv->SetObjectArrayElement(lJavaArray, i, str);
                 if (pEnv->ExceptionCheck()) {
                     return NULL;
@@ -644,25 +722,63 @@ extern "C" {
         }
     }
 
-    JNIEXPORT void JNICALL
-    Java_com_packtub_Store_initializeStore(JNIEnv *env, jobject instance) {
+    JNIEXPORT jlong JNICALL
+    Java_com_mdgd_storeapp_dto_Store_initializeStore(JNIEnv *env, jobject pThis) {
         mStore.mLength = 0;
-        startWatcher(env, &mStoreWatcher, &mStore, instance);
+        startWatcher(env, &mStoreWatcher, &mStore, pThis);
+        return (jlong)&mStoreWatcher;
     }
 
     JNIEXPORT void JNICALL
-    Java_com_packtub_Store_finalizeStore(JNIEnv *env, jobject instance) {
-        stopWatcher(env, &mStoreWatcher);
-        StoreEntry* lEntry = mStore.mEntries;
-        StoreEntry* lEntryEnd = lEntry + mStore.mLength;
-        while (lEntry < lEntryEnd) {
-            if(lEntry != NULL) {
-                delete[] lEntry->mKey;
-                releaseEntryValue(env, lEntry);
+    Java_com_mdgd_storeapp_dto_Store_finalizeStore(JNIEnv *env, jobject pThis, jlong watcher) {
+        // stopWatcher(env, &mStoreWatcher);
+        stopWatcher(env, (StoreWatcher*) watcher);
+        StoreEntry* entry = mStore.mEntries;
+        const StoreEntry* lEntryEnd = entry + mStore.mLength;
+        while (entry < lEntryEnd) {
+            if(entry != NULL) {
+                delete[] entry->mKey;
+                releaseEntryValue(env, entry);
             }
-            lEntry++;
+            entry++;
         }
         mStore.mLength = 0;
+    }
+
+    JNIEXPORT jstring JNICALL
+    Java_com_mdgd_storeapp_dto_Store_getArchitecture(JNIEnv* pEnv, jobject thiz){
+        #if defined(__arm__)
+        #if defined(__ARM_ARCH_7A__)
+        #if defined(__ARM_NEON__)
+            #if defined(__ARM_PCS_VFP)
+                #define ABI "armeabi-v7a/NEON (hard-float)"
+              #else
+                #define ABI "armeabi-v7a/NEON"
+              #endif
+        #else
+        #if defined(__ARM_PCS_VFP)
+        #define ABI "armeabi-v7a (hard-float)"
+        #else
+        #define ABI "armeabi-v7a"
+        #endif
+        #endif
+        #else
+        #define ABI "armeabi"
+        #endif
+        #elif defined(__i386__)
+            #define ABI "x86"
+        #elif defined(__x86_64__)
+        #define ABI "x86_64"
+        #elif defined(__mips64)  /* mips64el-* toolchain defines __mips__ too */
+        #define ABI "mips64"
+        #elif defined(__mips__)
+        #define ABI "mips"
+        #elif defined(__aarch64__)
+        #define ABI "arm64-v8a"
+        #else
+        #define ABI "unknown"
+        #endif
+        return (pEnv) -> NewStringUTF(ABI);
     }
 }
 #endif //STORE_COM_PACKTUB_STORE_H

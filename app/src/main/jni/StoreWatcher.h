@@ -17,7 +17,7 @@
 typedef struct {
     Store* mStore;
     JavaVM* mJavaVM;
-    jobject mStoreFront;
+    jobject mLock;
     pthread_t mThread;
     int32_t mState;
 

@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include "StoreWatcher.h"
+#include "store_support.h"
 #include <unistd.h>
 
 void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject pStoreFront) {
@@ -17,8 +18,8 @@ void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject p
         return;
     }
     // Сохранить в кэше объекты.
-    pWatcher->mStoreFront = pEnv->NewGlobalRef(pStoreFront);
-    if (pWatcher->mStoreFront == NULL) {
+    pWatcher->mLock = pEnv->NewGlobalRef(pStoreFront);
+    if (pWatcher->mLock == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
@@ -37,13 +38,13 @@ void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject p
         return;
     }
     // Сохранить ссылки на классы.
-    pWatcher->ClassStore = pEnv->FindClass("com/packtub/Store");
+    pWatcher->ClassStore = pEnv->FindClass("com/mdgd/storeapp/dto/Store");
     makeGlobalRef(pEnv, (jobject*) &pWatcher->ClassStore);
     if (pWatcher->ClassStore == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    pWatcher->ClassColor = pEnv->FindClass("com/packtub/Color");
+    pWatcher->ClassColor = pEnv->FindClass("com/mdgd/storeapp/dto/Color");
     makeGlobalRef(pEnv, (jobject*)&pWatcher->ClassColor);
     if (pWatcher->ClassColor == NULL) {
         stopWatcher(pEnv, pWatcher);
@@ -60,7 +61,7 @@ void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject p
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    pWatcher->MethodOnAlertColor = &(*pEnv->GetMethodID(pWatcher->ClassStore, "onAlert","(Lcom/packtub/Color;)V"));
+    pWatcher->MethodOnAlertColor = &(*pEnv->GetMethodID(pWatcher->ClassStore, "onAlert","(Lcom/mdgd/storeapp/dto/Color;)V"));
     if (pWatcher->MethodOnAlertColor == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
@@ -70,7 +71,7 @@ void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject p
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    jmethodID ConstructorColor = &(*pEnv->GetMethodID(pWatcher->ClassColor, "<init>", "(Ljava/lang/String;)V"));
+    const jmethodID ConstructorColor = &(*pEnv->GetMethodID(pWatcher->ClassColor, "<init>", "(Ljava/lang/String;)V"));
     if (ConstructorColor == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
@@ -113,19 +114,19 @@ void* runWatcher(void* pArgs) {
     while (lRunning) {
         usleep(SLEEP_DURATION * 1000000); // microseconds
         StoreEntry* lEntry = lWatcher->mStore->mEntries;
+        const StoreEntry* lEntryEnd = lEntry + lWatcher->mStore->mLength;
         int32_t lScanning = 1;
         while (lScanning) {
             // Начало критической секции может выполняться только в одном потоке.
             // Здесь записи не могут добавляться или изменяться.
-            lEnv->MonitorEnter(lWatcher->mStoreFront);
-            StoreEntry* lEntryEnd = lEntry + lWatcher->mStore->mLength;
+            lEnv->MonitorEnter(lWatcher->mLock);
             lRunning = (lWatcher->mState == STATE_OK);
             lScanning = (lEntry < lEntryEnd);
             if (lRunning && lScanning) {
                 processEntry(lEnv, lWatcher, lEntry);
             }
             // Конец критической секции.
-            lEnv->MonitorExit(lWatcher->mStoreFront);
+            lEnv->MonitorExit(lWatcher->mLock);
             // Перейти к следующей записи.
             lEntry++;
         }
@@ -151,18 +152,18 @@ void processEntry(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
 }
 
 void processEntryInt(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry){
-    if ((strcmp(pEntry->mKey, "watcherCounter") == 0)) {
+    if (strcmp(pEntry->mKey, "watcherCounter") == 0) {
         ++pEntry->mValue.mInteger;
     }
     else if ((pEntry->mValue.mInteger > 1000) || (pEntry->mValue.mInteger < -1000)) {
-        pEnv->CallVoidMethod(pWatcher->mStoreFront, pWatcher->MethodOnAlertInt, (jint) pEntry->mValue.mInteger);
+        pEnv->CallVoidMethod(pWatcher->mLock, pWatcher->MethodOnAlertInt, (jint) pEntry->mValue.mInteger);
     }
 }
 
 void processEntryString(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry){
     if (strcmp(pEntry->mValue.mString, "apple") == 0) {
         jstring lValue = pEnv->NewStringUTF(pEntry->mValue.mString);
-        pEnv->CallVoidMethod(pWatcher->mStoreFront, pWatcher->MethodOnAlertString, lValue);
+        pEnv->CallVoidMethod(pWatcher->mLock, pWatcher->MethodOnAlertString, lValue);
         pEnv->DeleteLocalRef(lValue);
     }
 }
@@ -171,7 +172,7 @@ void processEntryColor(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry)
     jboolean lResult = pEnv->CallBooleanMethod(pWatcher->mColor, pWatcher->MethodColorEquals,
                                                pEntry->mValue.mColor);
     if (lResult) {
-        pEnv->CallVoidMethod(pWatcher->mStoreFront, pWatcher->MethodOnAlertColor, pEntry->mValue.mColor);
+        pEnv->CallVoidMethod(pWatcher->mLock, pWatcher->MethodOnAlertColor, pEntry->mValue.mColor);
     }
 }
 
@@ -185,11 +186,11 @@ void deleteGlobalRef(JNIEnv* pEnv, jobject* pRef) {
 void stopWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher) {
     if (pWatcher->mState == STATE_OK) {
         // Ждать завершения фонового потока выполнения.
-        pEnv->MonitorEnter(pWatcher->mStoreFront);
+        pEnv->MonitorEnter(pWatcher->mLock);
         pWatcher->mState = STATE_KO;
-        pEnv->MonitorExit(pWatcher->mStoreFront);
+        pEnv->MonitorExit(pWatcher->mLock);
         pthread_join(pWatcher->mThread, NULL);
-        deleteGlobalRef(pEnv, &pWatcher->mStoreFront);
+        deleteGlobalRef(pEnv, &pWatcher->mLock);
         deleteGlobalRef(pEnv, &pWatcher->mColor);
         deleteGlobalRef(pEnv, (jobject*)&pWatcher->ClassStore);
         deleteGlobalRef(pEnv, (jobject*)&pWatcher->ClassColor);
@@ -199,9 +200,9 @@ void stopWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher) {
 void makeGlobalRef(JNIEnv* pEnv, jobject* pRef) {
     if (*pRef != NULL) {
         jobject lGlobalRef = pEnv->NewGlobalRef(*pRef);
-// Локальная ссылка больше не нужна.
+        // Локальная ссылка больше не нужна.
         pEnv->DeleteLocalRef(*pRef);
-// Здесь lGlobalRef может иметь значение NULL.
+        // Здесь lGlobalRef может иметь значение NULL.
         *pRef = lGlobalRef;
     }
 }

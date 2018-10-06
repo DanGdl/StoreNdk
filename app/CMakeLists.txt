@@ -17,11 +17,12 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             src/main/cpp/store.cpp
-             src/main/cpp/store_support.h
-             src/main/cpp/store_support.cpp
-             src/main/cpp/StoreWatcher.h
-             src/main/cpp/StoreWatcher.cpp)
+             src/main/jni/store.cpp
+             src/main/jni/store_support.h
+             src/main/jni/store_support.cpp
+             src/main/jni/StoreWatcher.h
+             src/main/jni/StoreWatcher.cpp
+        )
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -42,7 +43,7 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
                        store
-
+                       android
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )

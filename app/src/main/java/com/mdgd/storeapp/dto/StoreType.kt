@@ -1,11 +1,11 @@
-package com.packtub;
+package com.mdgd.storeapp.dto
 
 /**
  * Created by max
  * on 2/21/18.
  */
 
-public enum  StoreType {
+enum class StoreType {
     Integer, String, Bool, Byte,
     Char, Double, Float, Long,
     Short, Color, IntArray, StringArray,

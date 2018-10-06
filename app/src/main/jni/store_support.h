@@ -7,6 +7,7 @@
 
 #include "jni.h"
 #include <stdint.h>
+
 #define STORE_MAX_CAPACITY 16
 
 typedef enum {
@@ -52,13 +53,13 @@ typedef struct {
     int32_t mLength;
 } Store;
 
-int32_t isEntryValid(JNIEnv* pEnv, StoreEntry* pEntry, StoreType pType);
+int32_t isEntryValid(JNIEnv* pEnv, const StoreEntry* pEntry, const StoreType pType);
 
-StoreEntry* allocateEntry(JNIEnv* pEnv, Store* pStore, jstring pKey);
+StoreEntry* allocateEntry(JNIEnv* pEnv, Store* pStore, const jstring pKey);
 
-StoreEntry* findEntry(JNIEnv* pEnv, Store* pStore, jstring pKey);
+StoreEntry* findEntry(JNIEnv* pEnv, const Store* pStore, const jstring pKey);
 
-void releaseEntryValue(JNIEnv* pEnv, StoreEntry* pEntry);
+void releaseEntryValue(JNIEnv* pEnv, const StoreEntry* pEntry);
 
 void throwInvalidTypeException(JNIEnv* pEnv);
 
