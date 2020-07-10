@@ -8,3 +8,5 @@
 /build
 /captures
 .externalNativeBuild
+/app/.cxx/
+/gradle/wrapper/gradle-wrapper.jar

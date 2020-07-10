@@ -43,7 +43,6 @@ class StoreFragment : Fragment(), StoreListener, View.OnClickListener {
         typeSpn = v.findViewById(R.id.typeSelector)
         setValBtn = v.findViewById(R.id.setValueBtn)
         getValBtn = v.findViewById(R.id.getValueBtn)
-        typeSpn = v.findViewById(R.id.typeSelector)
 
         typeSpn!!.adapter = ArrayAdapter<StoreType>(context!!, android.R.layout.simple_list_item_1, StoreType.values())
 
