@@ -41,7 +41,7 @@ public class Store {
 
     public native int getCount();
 
-    public native int getArchitecture();
+    public native String getArchitecture();
 
     public native long initializeStore();
 

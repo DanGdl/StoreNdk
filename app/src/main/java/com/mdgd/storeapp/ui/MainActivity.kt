@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.mdgd.storeapp.R
 
+/**
+ * Created by max
+ * on 3/16/18.
+ */
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

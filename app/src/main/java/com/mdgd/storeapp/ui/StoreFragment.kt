@@ -16,7 +16,10 @@ import com.mdgd.storeapp.model.storage.StoreThreadSafe
 import com.mdgd.storeapp.model.storage.StoreType
 import java.util.*
 
-
+/**
+ * Created by max
+ * on 3/16/18.
+ */
 class StoreFragment : Fragment(), StoreListener, View.OnClickListener {
 
     private val store = StoreThreadSafe(this)
@@ -36,9 +39,7 @@ class StoreFragment : Fragment(), StoreListener, View.OnClickListener {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_store, container, false)
     }
@@ -58,7 +59,7 @@ class StoreFragment : Fragment(), StoreListener, View.OnClickListener {
         setValBtn?.setOnClickListener(this)
         getValBtn?.setOnClickListener(this)
 
-        activity?.title = "${store.count}, Build ${store.architecture}"
+        activity?.title = "Arch ${store.architecture}, stored ${store.count}"
     }
 
     override fun onStart() {
@@ -74,8 +75,7 @@ class StoreFragment : Fragment(), StoreListener, View.OnClickListener {
     override fun onClick(v: View) {
         if (v === setValBtn) {
             executeSetValue()
-        }
-        else if (v === getValBtn) {
+        } else if (v === getValBtn) {
             executeGetValue()
         }
     }
@@ -95,7 +95,7 @@ class StoreFragment : Fragment(), StoreListener, View.OnClickListener {
             displayError(e.message!!)
         }
 
-        colorTest?.setBackgroundColor(0)
+        activity?.title = "Arch ${store.architecture}, stored ${store.count}"
     }
 
     private fun executeGetValue() {
@@ -111,6 +111,8 @@ class StoreFragment : Fragment(), StoreListener, View.OnClickListener {
             e.printStackTrace()
             displayError(e.message!!)
         }
+
+        activity?.title = "Arch ${store.architecture}, stored ${store.count}"
     }
 
     override fun onAlert(pValue: Int) {
