@@ -1,7 +1,7 @@
 package com.mdgd.storeapp.ui
 
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.mdgd.storeapp.R
 
 class MainActivity : AppCompatActivity() {

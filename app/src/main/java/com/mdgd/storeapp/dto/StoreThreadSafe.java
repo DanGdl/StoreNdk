@@ -1,6 +1,6 @@
 package com.mdgd.storeapp.dto;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.mdgd.storeapp.exception.InvalidTypeException;
 import com.mdgd.storeapp.exception.NotExistingKeyException;
