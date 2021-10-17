@@ -1,15 +1,14 @@
-package com.mdgd.storeapp.dto;
+package com.mdgd.storeapp.model.storage;
 
 import androidx.annotation.NonNull;
 
-import com.mdgd.storeapp.exception.InvalidTypeException;
-import com.mdgd.storeapp.exception.NotExistingKeyException;
+import com.mdgd.storeapp.model.storage.exception.InvalidTypeException;
+import com.mdgd.storeapp.model.storage.exception.NotExistingKeyException;
 
 /**
  * Created by max
  * on 3/16/18.
  */
-
 public class StoreThreadSafe extends Store {
     protected static Object LOCK; // set in jni
 
@@ -168,14 +167,14 @@ public class StoreThreadSafe extends Store {
 
     @Override
     @NonNull
-    public Boolean[] getBoolArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
+    public boolean[] getBoolArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
         synchronized (LOCK) {
             return super.getBoolArray(pKey);
         }
     }
 
     @Override
-    public void setBoolArray(@NonNull String pKey, @NonNull Boolean[] pBoolArray) {
+    public void setBoolArray(@NonNull String pKey, @NonNull boolean[] pBoolArray) {
         synchronized (LOCK) {
             super.setBoolArray(pKey, pBoolArray);
         }
@@ -183,14 +182,14 @@ public class StoreThreadSafe extends Store {
 
     @Override
     @NonNull
-    public Byte[] getByteArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
+    public byte[] getByteArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
         synchronized (LOCK) {
             return super.getByteArray(pKey);
         }
     }
 
     @Override
-    public void setByteArray(@NonNull String pKey, @NonNull Byte[] pByteArray) {
+    public void setByteArray(@NonNull String pKey, @NonNull byte[] pByteArray) {
         synchronized (LOCK) {
             super.setByteArray(pKey, pByteArray);
         }
@@ -198,14 +197,14 @@ public class StoreThreadSafe extends Store {
 
     @Override
     @NonNull
-    public Character[] getCharArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
+    public char[] getCharArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
         synchronized (LOCK) {
             return super.getCharArray(pKey);
         }
     }
 
     @Override
-    public void setCharArray(@NonNull String pKey, @NonNull Character[] pCharArray) {
+    public void setCharArray(@NonNull String pKey, @NonNull char[] pCharArray) {
         synchronized (LOCK) {
             super.setCharArray(pKey, pCharArray);
         }
@@ -213,14 +212,14 @@ public class StoreThreadSafe extends Store {
 
     @Override
     @NonNull
-    public Double[] getDoubleArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
+    public double[] getDoubleArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
         synchronized (LOCK) {
             return super.getDoubleArray(pKey);
         }
     }
 
     @Override
-    public void setDoubleArray(@NonNull String pKey, @NonNull Double[] pDoubleArray) {
+    public void setDoubleArray(@NonNull String pKey, @NonNull double[] pDoubleArray) {
         synchronized (LOCK) {
             super.setDoubleArray(pKey, pDoubleArray);
         }
@@ -228,14 +227,14 @@ public class StoreThreadSafe extends Store {
 
     @Override
     @NonNull
-    public Float[] getFloatArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
+    public float[] getFloatArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
         synchronized (LOCK) {
             return super.getFloatArray(pKey);
         }
     }
 
     @Override
-    public void setFloatArray(@NonNull String pKey, @NonNull Float[] pFloatArray) {
+    public void setFloatArray(@NonNull String pKey, @NonNull float[] pFloatArray) {
         synchronized (LOCK) {
             super.setFloatArray(pKey, pFloatArray);
         }
@@ -243,14 +242,14 @@ public class StoreThreadSafe extends Store {
 
     @Override
     @NonNull
-    public Integer[] getIntArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
+    public int[] getIntArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
         synchronized (LOCK) {
             return super.getIntArray(pKey);
         }
     }
 
     @Override
-    public void setIntArray(@NonNull String pKey, @NonNull Integer[] pIntArray) {
+    public void setIntArray(@NonNull String pKey, @NonNull int[] pIntArray) {
         synchronized (LOCK) {
             super.setIntArray(pKey, pIntArray);
         }
@@ -258,14 +257,14 @@ public class StoreThreadSafe extends Store {
 
     @Override
     @NonNull
-    public Long[] getLongArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
+    public long[] getLongArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
         synchronized (LOCK) {
             return super.getLongArray(pKey);
         }
     }
 
     @Override
-    public void setLongArray(@NonNull String pKey, @NonNull Long[] pLongArray) {
+    public void setLongArray(@NonNull String pKey, @NonNull long[] pLongArray) {
         synchronized (LOCK) {
             super.setLongArray(pKey, pLongArray);
         }
@@ -273,14 +272,14 @@ public class StoreThreadSafe extends Store {
 
     @Override
     @NonNull
-    public Short[] getShortArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
+    public short[] getShortArray(@NonNull String pKey) throws NotExistingKeyException, InvalidTypeException {
         synchronized (LOCK) {
             return super.getShortArray(pKey);
         }
     }
 
     @Override
-    public void setShortArray(@NonNull String pKey, @NonNull Short[] pShortArray) {
+    public void setShortArray(@NonNull String pKey, @NonNull short[] pShortArray) {
         synchronized (LOCK) {
             super.setShortArray(pKey, pShortArray);
         }

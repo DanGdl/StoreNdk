@@ -28,24 +28,24 @@ void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject p
     // приложениях такая проверка обязательно должна выполняться...).
     pthread_attr_t lAttributes;
     int lError = pthread_attr_init(&lAttributes);
-    if (lError){
+    if (lError) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
     lError = pthread_create(&pWatcher->mThread, &lAttributes, runWatcher, pWatcher);
-    if (lError){
+    if (lError) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
     // Сохранить ссылки на классы.
-    pWatcher->ClassStore = pEnv->FindClass("com/mdgd/storeapp/dto/Store");
-    makeGlobalRef(pEnv, (jobject*) &pWatcher->ClassStore);
+    pWatcher->ClassStore = pEnv->FindClass("com/mdgd/storeapp/model/storage/Store");
+    makeGlobalRef(pEnv, (jobject *) &pWatcher->ClassStore);
     if (pWatcher->ClassStore == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    pWatcher->ClassColor = pEnv->FindClass("com/mdgd/storeapp/dto/Color");
-    makeGlobalRef(pEnv, (jobject*)&pWatcher->ClassColor);
+    pWatcher->ClassColor = pEnv->FindClass("com/mdgd/storeapp/model/storage/Color");
+    makeGlobalRef(pEnv, (jobject *) &pWatcher->ClassColor);
     if (pWatcher->ClassColor == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
@@ -56,22 +56,26 @@ void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject p
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    pWatcher->MethodOnAlertString = &(*pEnv->GetMethodID(pWatcher->ClassStore, "onAlert", "(Ljava/lang/String;)V"));
+    pWatcher->MethodOnAlertString = &(*pEnv->GetMethodID(pWatcher->ClassStore, "onAlert",
+                                                         "(Ljava/lang/String;)V"));
     if (pWatcher->MethodOnAlertString == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    pWatcher->MethodOnAlertColor = &(*pEnv->GetMethodID(pWatcher->ClassStore, "onAlert","(Lcom/mdgd/storeapp/dto/Color;)V"));
+    pWatcher->MethodOnAlertColor = &(*pEnv->GetMethodID(pWatcher->ClassStore, "onAlert",
+                                                        "(Lcom/mdgd/storeapp/model/storage/Color;)V"));
     if (pWatcher->MethodOnAlertColor == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    pWatcher->MethodColorEquals = &(*pEnv->GetMethodID(pWatcher->ClassColor, "equals", "(Ljava/lang/Object;)Z"));
+    pWatcher->MethodColorEquals = &(*pEnv->GetMethodID(pWatcher->ClassColor, "equals",
+                                                       "(Ljava/lang/Object;)Z"));
     if (pWatcher->MethodColorEquals == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    const jmethodID ConstructorColor = &(*pEnv->GetMethodID(pWatcher->ClassColor, "<init>", "(Ljava/lang/String;)V"));
+    const jmethodID ConstructorColor = &(*pEnv->GetMethodID(pWatcher->ClassColor, "<init>",
+                                                            "(Ljava/lang/String;)V"));
     if (ConstructorColor == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
@@ -84,7 +88,7 @@ void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject p
     }
     pWatcher->mColor = &(*pEnv->NewObject(pWatcher->ClassColor, ConstructorColor, lColor));
     makeGlobalRef(pEnv, &pWatcher->mColor);
-    if (pWatcher->mColor == NULL){
+    if (pWatcher->mColor == NULL) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
@@ -103,9 +107,9 @@ JNIEnv* getJNIEnv(JavaVM* pJavaVM) {
 }
 
 void* runWatcher(void* pArgs) {
-    StoreWatcher* lWatcher = (StoreWatcher*) pArgs;
-    JavaVM* lJavaVM = lWatcher->mJavaVM;
-    JNIEnv* lEnv = getJNIEnv(lJavaVM);
+    StoreWatcher *lWatcher = (StoreWatcher *) pArgs;
+    JavaVM *lJavaVM = lWatcher->mJavaVM;
+    JNIEnv *lEnv = getJNIEnv(lJavaVM);
     if (lEnv == NULL) {
         lJavaVM->DetachCurrentThread();
         pthread_exit(NULL);
@@ -113,8 +117,8 @@ void* runWatcher(void* pArgs) {
     int32_t lRunning = 1;
     while (lRunning) {
         usleep(SLEEP_DURATION * 1000000); // microseconds
-        StoreEntry* lEntry = lWatcher->mStore->mEntries;
-        const StoreEntry* lEntryEnd = lEntry + lWatcher->mStore->mLength;
+        StoreEntry *lEntry = lWatcher->mStore->mEntries;
+        const StoreEntry *lEntryEnd = lEntry + lWatcher->mStore->mLength;
         int32_t lScanning = 1;
         while (lScanning) {
             // Начало критической секции может выполняться только в одном потоке.
@@ -139,11 +143,13 @@ void processEntry(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
     switch (pEntry->mType) {
         case StoreType_Integer: {
             processEntryInt(pEnv, pWatcher, pEntry);
-        }break;
+        }
+            break;
 
         case StoreType_String: {
             processEntryString(pEnv, pWatcher, pEntry);
-        }break;
+        }
+            break;
 
         case StoreType_Color: {
             processEntryColor(pEnv, pWatcher, pEntry);
@@ -151,16 +157,17 @@ void processEntry(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
     }
 }
 
-void processEntryInt(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry){
+void processEntryInt(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
     if (strcmp(pEntry->mKey, "watcherCounter") == 0) {
         ++pEntry->mValue.mInteger;
-    }
-    else if ((pEntry->mValue.mInteger > 1000) || (pEntry->mValue.mInteger < -1000)) {
-        pEnv->CallVoidMethod(pWatcher->mLock, pWatcher->MethodOnAlertInt, (jint) pEntry->mValue.mInteger);
+    } else if ((pEntry->mValue.mInteger > 1000) || (pEntry->mValue.mInteger < -1000)) {
+        pEnv->CallVoidMethod(
+                pWatcher->mLock, pWatcher->MethodOnAlertInt, (jint) pEntry->mValue.mInteger
+        );
     }
 }
 
-void processEntryString(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry){
+void processEntryString(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
     if (strcmp(pEntry->mValue.mString, "apple") == 0) {
         jstring lValue = pEnv->NewStringUTF(pEntry->mValue.mString);
         pEnv->CallVoidMethod(pWatcher->mLock, pWatcher->MethodOnAlertString, lValue);
@@ -168,11 +175,14 @@ void processEntryString(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry
     }
 }
 
-void processEntryColor(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry){
-    jboolean lResult = pEnv->CallBooleanMethod(pWatcher->mColor, pWatcher->MethodColorEquals,
-                                               pEntry->mValue.mColor);
+void processEntryColor(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
+    jboolean lResult = pEnv->CallBooleanMethod(
+            pWatcher->mColor, pWatcher->MethodColorEquals, pEntry->mValue.mColor
+    );
     if (lResult) {
-        pEnv->CallVoidMethod(pWatcher->mLock, pWatcher->MethodOnAlertColor, pEntry->mValue.mColor);
+        pEnv->CallVoidMethod(
+                pWatcher->mLock, pWatcher->MethodOnAlertColor, pEntry->mValue.mColor
+        );
     }
 }
 
@@ -192,8 +202,8 @@ void stopWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher) {
         pthread_join(pWatcher->mThread, NULL);
         deleteGlobalRef(pEnv, &pWatcher->mLock);
         deleteGlobalRef(pEnv, &pWatcher->mColor);
-        deleteGlobalRef(pEnv, (jobject*)&pWatcher->ClassStore);
-        deleteGlobalRef(pEnv, (jobject*)&pWatcher->ClassColor);
+        deleteGlobalRef(pEnv, (jobject *) &pWatcher->ClassStore);
+        deleteGlobalRef(pEnv, (jobject *) &pWatcher->ClassColor);
     }
 }
 

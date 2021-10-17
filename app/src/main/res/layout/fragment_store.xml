@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:layout_editor_absoluteY="25dp">
+    android:layout_height="match_parent">
 
     <TextView
         android:id="@+id/mainLabel"
@@ -14,10 +11,13 @@
         android:gravity="center"
         android:padding="5dp"
         android:text="@string/save_or_retrieve"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/label_key"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -34,13 +34,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="@string/key_input"
+        android:inputType="text"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.25"
-        app:layout_constraintStart_toEndOf="@+id/textView2"
+        app:layout_constraintStart_toEndOf="@+id/label_key"
         app:layout_constraintTop_toBottomOf="@+id/mainLabel" />
 
     <TextView
-        android:id="@+id/textView5"
+        android:id="@+id/label_value"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -56,12 +56,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="@string/value_input"
+        android:inputType="text"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline"
         app:layout_constraintTop_toBottomOf="@+id/keyInput" />
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/label_type"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -76,10 +77,10 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="@string/select_type"
-        app:layout_constraintBottom_toBottomOf="@+id/textView4"
+        app:layout_constraintBottom_toBottomOf="@+id/label_type"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toTopOf="@+id/textView4" />
+        app:layout_constraintTop_toTopOf="@+id/label_type" />
 
     <Button
         android:id="@+id/getValueBtn"
@@ -88,7 +89,7 @@
         android:layout_height="wrap_content"
         android:text="@string/get_value"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView4" />
+        app:layout_constraintTop_toBottomOf="@+id/label_type" />
 
     <Button
         android:id="@+id/setValueBtn"
@@ -99,12 +100,14 @@
         android:padding="10dp"
         android:text="@string/set_value"
         app:layout_constraintEnd_toStartOf="@+id/getValueBtn"
-        app:layout_constraintTop_toBottomOf="@+id/textView4" />
+        app:layout_constraintTop_toBottomOf="@+id/label_type" />
 
     <View
         android:id="@+id/colorTest"
         android:layout_width="0dp"
         android:layout_height="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/setValueBtn" />
 
     <androidx.constraintlayout.widget.Guideline
@@ -112,6 +115,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_begin="100dp" />
+        app:layout_constraintGuide_percent="0.25" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
