@@ -7,7 +7,7 @@
 #include "store_support.h"
 #include <unistd.h>
 
-void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject pStoreFront) {
+void startWatcher(JNIEnv *pEnv, StoreWatcher *pWatcher, Store *pStore, jobject pStoreFront) {
     // Очистить структуру StoreWatcher.
     memset(pWatcher, 0, sizeof(StoreWatcher));
     pWatcher->mState = STATE_OK;
@@ -94,19 +94,19 @@ void startWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher, Store* pStore, jobject p
     }
 }
 
-JNIEnv* getJNIEnv(JavaVM* pJavaVM) {
+JNIEnv *getJNIEnv(JavaVM *pJavaVM) {
     JavaVMAttachArgs lJavaVMAttachArgs;
     lJavaVMAttachArgs.version = JNI_VERSION_1_6;
     lJavaVMAttachArgs.name = "NativeThread";
     lJavaVMAttachArgs.group = NULL;
-    JNIEnv* lEnv;
+    JNIEnv *lEnv;
     if (pJavaVM->AttachCurrentThread(&lEnv, &lJavaVMAttachArgs) != JNI_OK) {
         lEnv = NULL;
     }
     return lEnv;
 }
 
-void* runWatcher(void* pArgs) {
+void *runWatcher(void *pArgs) {
     StoreWatcher *lWatcher = (StoreWatcher *) pArgs;
     JavaVM *lJavaVM = lWatcher->mJavaVM;
     JNIEnv *lEnv = getJNIEnv(lJavaVM);
@@ -139,7 +139,7 @@ void* runWatcher(void* pArgs) {
     pthread_exit(NULL);
 }
 
-void processEntry(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
+void processEntry(JNIEnv *pEnv, StoreWatcher *pWatcher, StoreEntry *pEntry) {
     switch (pEntry->mType) {
         case StoreType_Integer: {
             processEntryInt(pEnv, pWatcher, pEntry);
@@ -153,11 +153,12 @@ void processEntry(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
 
         case StoreType_Color: {
             processEntryColor(pEnv, pWatcher, pEntry);
-        }break;
+        }
+            break;
     }
 }
 
-void processEntryInt(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
+void processEntryInt(JNIEnv *pEnv, StoreWatcher *pWatcher, StoreEntry *pEntry) {
     if (strcmp(pEntry->mKey, "watcherCounter") == 0) {
         ++pEntry->mValue.mInteger;
     } else if ((pEntry->mValue.mInteger > 1000) || (pEntry->mValue.mInteger < -1000)) {
@@ -167,7 +168,7 @@ void processEntryInt(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
     }
 }
 
-void processEntryString(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
+void processEntryString(JNIEnv *pEnv, StoreWatcher *pWatcher, StoreEntry *pEntry) {
     if (strcmp(pEntry->mValue.mString, "apple") == 0) {
         jstring lValue = pEnv->NewStringUTF(pEntry->mValue.mString);
         pEnv->CallVoidMethod(pWatcher->mLock, pWatcher->MethodOnAlertString, lValue);
@@ -175,7 +176,7 @@ void processEntryString(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry
     }
 }
 
-void processEntryColor(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry) {
+void processEntryColor(JNIEnv *pEnv, StoreWatcher *pWatcher, StoreEntry *pEntry) {
     jboolean lResult = pEnv->CallBooleanMethod(
             pWatcher->mColor, pWatcher->MethodColorEquals, pEntry->mValue.mColor
     );
@@ -186,14 +187,14 @@ void processEntryColor(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry)
     }
 }
 
-void deleteGlobalRef(JNIEnv* pEnv, jobject* pRef) {
+void deleteGlobalRef(JNIEnv *pEnv, jobject *pRef) {
     if (*pRef != NULL) {
         pEnv->DeleteGlobalRef(*pRef);
         *pRef = NULL;
     }
 }
 
-void stopWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher) {
+void stopWatcher(JNIEnv *pEnv, StoreWatcher *pWatcher) {
     if (pWatcher->mState == STATE_OK) {
         // Ждать завершения фонового потока выполнения.
         pEnv->MonitorEnter(pWatcher->mLock);
@@ -207,7 +208,7 @@ void stopWatcher(JNIEnv* pEnv, StoreWatcher* pWatcher) {
     }
 }
 
-void makeGlobalRef(JNIEnv* pEnv, jobject* pRef) {
+void makeGlobalRef(JNIEnv *pEnv, jobject *pRef) {
     if (*pRef != NULL) {
         jobject lGlobalRef = pEnv->NewGlobalRef(*pRef);
         // Локальная ссылка больше не нужна.
