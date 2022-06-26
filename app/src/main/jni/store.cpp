@@ -225,16 +225,15 @@ namespace com_mdgd_storeapp_model_storage_Store {
 
     static void setIntArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jintArray pIntArray) {
         const jsize lLength = pEnv->GetArrayLength(pIntArray);
-        int32_t *lArray = new int32_t[lLength * sizeof(int32_t)];
+        auto *lArray = new int32_t[lLength * sizeof(int32_t)];
         pEnv->GetIntArrayRegion(pIntArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
             delete[] lArray;
             return;
         }
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
-        if (lEntry != nullptr) {
+        if (lEntry == nullptr) {
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_IntArray;
             lEntry->mLength = lLength;
@@ -268,7 +267,7 @@ namespace com_mdgd_storeapp_model_storage_Store {
 
     static void setColorArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jobjectArray pColorArray) {
         const jsize lLength = pEnv->GetArrayLength(pColorArray);
-        jobject *lArray = new jobject[lLength * sizeof(jobject)];
+        auto *lArray = new jobject[lLength * sizeof(jobject)];
         int32_t i, j;
         for (i = 0; i < lLength; ++i) {
             jobject lLocalColor = pEnv->GetObjectArrayElement(pColorArray, i);
@@ -295,7 +294,6 @@ namespace com_mdgd_storeapp_model_storage_Store {
                 pEnv->DeleteGlobalRef(lArray[j]);
             }
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_ColorArray;
             lEntry->mLength = lLength;
@@ -305,7 +303,7 @@ namespace com_mdgd_storeapp_model_storage_Store {
 
     static void setBoolArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jbooleanArray pBoolArray) {
         const jsize lLength = pEnv->GetArrayLength(pBoolArray);
-        uint8_t *lArray = new uint8_t[lLength * sizeof(uint8_t)];
+        auto *lArray = new uint8_t[lLength * sizeof(uint8_t)];
         pEnv->GetBooleanArrayRegion(pBoolArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
             delete[] lArray;
@@ -314,7 +312,6 @@ namespace com_mdgd_storeapp_model_storage_Store {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry == nullptr) {
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_BoolArray;
             lEntry->mLength = lLength;
@@ -337,7 +334,7 @@ namespace com_mdgd_storeapp_model_storage_Store {
 
     static void setByteArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jbyteArray pByteArray) {
         const jsize lLength = pEnv->GetArrayLength(pByteArray);
-        int8_t *lArray = new int8_t[lLength * sizeof(int8_t)];
+        auto *lArray = new int8_t[lLength * sizeof(int8_t)];
         pEnv->GetByteArrayRegion(pByteArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
             delete[] lArray;
@@ -346,7 +343,6 @@ namespace com_mdgd_storeapp_model_storage_Store {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry == nullptr) {
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_ByteArray;
             lEntry->mLength = lLength;
@@ -369,7 +365,7 @@ namespace com_mdgd_storeapp_model_storage_Store {
 
     static void setCharArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jcharArray pCharArray) {
         const jsize lLength = pEnv->GetArrayLength(pCharArray);
-        uint16_t *lArray = new uint16_t[lLength * sizeof(uint16_t)];
+        auto *lArray = new uint16_t[lLength * sizeof(uint16_t)];
         pEnv->GetCharArrayRegion(pCharArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
             delete[] lArray;
@@ -378,7 +374,6 @@ namespace com_mdgd_storeapp_model_storage_Store {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry == nullptr) {
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_CharArray;
             lEntry->mLength = lLength;
@@ -402,7 +397,7 @@ namespace com_mdgd_storeapp_model_storage_Store {
     static void
     setDoubleArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jdoubleArray pDoubleArray) {
         const jsize lLength = pEnv->GetArrayLength(pDoubleArray);
-        double *lArray = new double[lLength * sizeof(double)];
+        auto *lArray = new double[lLength * sizeof(double)];
         pEnv->GetDoubleArrayRegion(pDoubleArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
             delete[] lArray;
@@ -411,7 +406,6 @@ namespace com_mdgd_storeapp_model_storage_Store {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry == nullptr) {
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_DoubleArray;
             lEntry->mLength = lLength;
@@ -434,7 +428,7 @@ namespace com_mdgd_storeapp_model_storage_Store {
 
     static void setFloatArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jfloatArray pFloatArray) {
         const jsize lLength = pEnv->GetArrayLength(pFloatArray);
-        float *lArray = new float[lLength * sizeof(float)];
+        auto *lArray = new float[lLength * sizeof(float)];
         pEnv->GetFloatArrayRegion(pFloatArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
             delete[] lArray;
@@ -443,7 +437,6 @@ namespace com_mdgd_storeapp_model_storage_Store {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry == nullptr) {
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_FloatArray;
             lEntry->mLength = lLength;
@@ -466,7 +459,7 @@ namespace com_mdgd_storeapp_model_storage_Store {
 
     static void setLongArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jlongArray pLongArray) {
         const jsize lLength = pEnv->GetArrayLength(pLongArray);
-        int64_t *lArray = new int64_t[lLength * sizeof(int64_t)];
+        auto *lArray = new int64_t[lLength * sizeof(int64_t)];
         pEnv->GetLongArrayRegion(pLongArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
             delete[] lArray;
@@ -475,7 +468,6 @@ namespace com_mdgd_storeapp_model_storage_Store {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry == nullptr) {
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_LongArray;
             lEntry->mLength = lLength;
@@ -498,7 +490,7 @@ namespace com_mdgd_storeapp_model_storage_Store {
 
     static void setShortArray(JNIEnv *pEnv, jobject pThis, jstring pKey, jshortArray pShortArray) {
         const jsize lLength = pEnv->GetArrayLength(pShortArray);
-        int16_t *lArray = new int16_t[lLength * sizeof(int16_t)];
+        auto *lArray = new int16_t[lLength * sizeof(int16_t)];
         pEnv->GetShortArrayRegion(pShortArray, 0, lLength, lArray);
         if (pEnv->ExceptionCheck()) {
             delete[] lArray;
@@ -507,7 +499,6 @@ namespace com_mdgd_storeapp_model_storage_Store {
         StoreEntry *lEntry = allocateEntry(pEnv, &mStore, pKey);
         if (lEntry == nullptr) {
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_ShortArray;
             lEntry->mLength = lLength;
@@ -534,7 +525,7 @@ namespace com_mdgd_storeapp_model_storage_Store {
         char **lArray = new char *[lLength * sizeof(char *)];
         int32_t i, j;
         for (i = 0; i < lLength; ++i) {
-            jstring obj = (jstring) pEnv->GetObjectArrayElement(pStringArray, i);
+            auto obj = (jstring) pEnv->GetObjectArrayElement(pStringArray, i);
             if (obj == nullptr) {
                 for (j = 0; j < i; ++j) {
                     delete[] lArray[j];
@@ -562,7 +553,6 @@ namespace com_mdgd_storeapp_model_storage_Store {
                 delete[] lArray[j];
             }
             delete[] lArray;
-            return;
         } else {
             lEntry->mType = StoreType_StringArray;
             lEntry->mLength = lLength;
@@ -801,4 +791,4 @@ namespace com_mdgd_storeapp_model_storage_Store {
     }
 }
 
-#endif //STORE_COM_PACKTUB_STORE_H
+#endif

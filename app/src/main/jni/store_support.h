@@ -20,7 +20,7 @@ typedef enum {
 
 typedef union {
     int32_t mInteger;
-    char* mString;
+    char *mString;
     uint8_t mBool;
     int8_t mByte;
     uint16_t mChar;
@@ -29,20 +29,20 @@ typedef union {
     int64_t mLong;
     int16_t mShort;
     jobject mColor;
-    int32_t* mIntArray;
-    char** mStringArray;
-    uint8_t* mBoolArray;
-    int8_t* mByteArray;
-    uint16_t* mCharArray;
-    double* mDoubleArray;
-    float* mFloatArray;
-    int64_t* mLongArray;
-    int16_t* mShortArray;
-    jobject* mColorArray;
+    int32_t *mIntArray;
+    char **mStringArray;
+    uint8_t *mBoolArray;
+    int8_t *mByteArray;
+    uint16_t *mCharArray;
+    double *mDoubleArray;
+    float *mFloatArray;
+    int64_t *mLongArray;
+    int16_t *mShortArray;
+    jobject *mColorArray;
 } StoreValue;
 
 typedef struct {
-    char* mKey;
+    char *mKey;
     StoreType mType;
     StoreValue mValue;
     int32_t mLength; // array
@@ -67,4 +67,4 @@ void throwNotExistingKeyException(JNIEnv* pEnv);
 
 void throwStoreFullException(JNIEnv* pEnv);
 
-#endif //STORE_STRORE_H
+#endif

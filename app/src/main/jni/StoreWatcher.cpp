@@ -2,7 +2,7 @@
 // Created by max on 2/27/18.
 //
 
-#include <string.h>
+#include <cstring>
 #include "StoreWatcher.h"
 #include "store_support.h"
 #include <unistd.h>
@@ -19,7 +19,7 @@ void startWatcher(JNIEnv *pEnv, StoreWatcher *pWatcher, Store *pStore, jobject p
     }
     // Сохранить в кэше объекты.
     pWatcher->mLock = pEnv->NewGlobalRef(pStoreFront);
-    if (pWatcher->mLock == NULL) {
+    if (pWatcher->mLock == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
@@ -40,55 +40,62 @@ void startWatcher(JNIEnv *pEnv, StoreWatcher *pWatcher, Store *pStore, jobject p
     // Сохранить ссылки на классы.
     pWatcher->ClassStore = pEnv->FindClass("com/mdgd/storeapp/model/storage/Store");
     makeGlobalRef(pEnv, (jobject *) &pWatcher->ClassStore);
-    if (pWatcher->ClassStore == NULL) {
+    if (pWatcher->ClassStore == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
     pWatcher->ClassColor = pEnv->FindClass("com/mdgd/storeapp/model/storage/Color");
     makeGlobalRef(pEnv, (jobject *) &pWatcher->ClassColor);
-    if (pWatcher->ClassColor == NULL) {
+    if (pWatcher->ClassColor == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
     // Сохранить ссылки на Java-методы.
-    pWatcher->MethodOnAlertInt = &(*pEnv->GetMethodID(pWatcher->ClassStore, "onAlert", "(I)V"));
-    if (pWatcher->MethodOnAlertInt == NULL) {
+    pWatcher->MethodOnAlertInt = &(*pEnv->GetMethodID(
+            pWatcher->ClassStore, "onAlert", "(I)V")
+    );
+    if (pWatcher->MethodOnAlertInt == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    pWatcher->MethodOnAlertString = &(*pEnv->GetMethodID(pWatcher->ClassStore, "onAlert",
-                                                         "(Ljava/lang/String;)V"));
-    if (pWatcher->MethodOnAlertString == NULL) {
+    pWatcher->MethodOnAlertString = &(
+            *pEnv->GetMethodID(pWatcher->ClassStore, "onAlert", "(Ljava/lang/String;)V")
+    );
+    if (pWatcher->MethodOnAlertString == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    pWatcher->MethodOnAlertColor = &(*pEnv->GetMethodID(pWatcher->ClassStore, "onAlert",
-                                                        "(Lcom/mdgd/storeapp/model/storage/Color;)V"));
-    if (pWatcher->MethodOnAlertColor == NULL) {
+    pWatcher->MethodOnAlertColor = &(
+            *pEnv->GetMethodID(pWatcher->ClassStore, "onAlert",
+                               "(Lcom/mdgd/storeapp/model/storage/Color;)V")
+    );
+    if (pWatcher->MethodOnAlertColor == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    pWatcher->MethodColorEquals = &(*pEnv->GetMethodID(pWatcher->ClassColor, "equals",
-                                                       "(Ljava/lang/Object;)Z"));
-    if (pWatcher->MethodColorEquals == NULL) {
+    pWatcher->MethodColorEquals = &(
+            *pEnv->GetMethodID(pWatcher->ClassColor, "equals", "(Ljava/lang/Object;)Z")
+    );
+    if (pWatcher->MethodColorEquals == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
-    const jmethodID ConstructorColor = &(*pEnv->GetMethodID(pWatcher->ClassColor, "<init>",
-                                                            "(Ljava/lang/String;)V"));
-    if (ConstructorColor == NULL) {
+    jmethodID ConstructorColor = &(
+            *pEnv->GetMethodID(pWatcher->ClassColor, "<init>", "(Ljava/lang/String;)V")
+    );
+    if (ConstructorColor == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
     // Создать новый объект, описывающий белый цвет, и сохранить глобальную ссылку.
     jstring lColor = &(*pEnv->NewStringUTF("white"));
-    if (lColor == NULL) {
+    if (lColor == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
     pWatcher->mColor = &(*pEnv->NewObject(pWatcher->ClassColor, ConstructorColor, lColor));
     makeGlobalRef(pEnv, &pWatcher->mColor);
-    if (pWatcher->mColor == NULL) {
+    if (pWatcher->mColor == nullptr) {
         stopWatcher(pEnv, pWatcher);
         return;
     }
@@ -98,21 +105,21 @@ JNIEnv *getJNIEnv(JavaVM *pJavaVM) {
     JavaVMAttachArgs lJavaVMAttachArgs;
     lJavaVMAttachArgs.version = JNI_VERSION_1_6;
     lJavaVMAttachArgs.name = "NativeThread";
-    lJavaVMAttachArgs.group = NULL;
+    lJavaVMAttachArgs.group = nullptr;
     JNIEnv *lEnv;
     if (pJavaVM->AttachCurrentThread(&lEnv, &lJavaVMAttachArgs) != JNI_OK) {
-        lEnv = NULL;
+        lEnv = nullptr;
     }
     return lEnv;
 }
 
 void *runWatcher(void *pArgs) {
-    StoreWatcher *lWatcher = (StoreWatcher *) pArgs;
+    auto *lWatcher = (StoreWatcher *) pArgs;
     JavaVM *lJavaVM = lWatcher->mJavaVM;
     JNIEnv *lEnv = getJNIEnv(lJavaVM);
-    if (lEnv == NULL) {
+    if (lEnv == nullptr) {
         lJavaVM->DetachCurrentThread();
-        pthread_exit(NULL);
+        pthread_exit(nullptr);
     }
     int32_t lRunning = 1;
     while (lRunning) {
@@ -136,7 +143,7 @@ void *runWatcher(void *pArgs) {
         }
     }
     lJavaVM->DetachCurrentThread();
-    pthread_exit(NULL);
+    pthread_exit(nullptr);
 }
 
 void processEntry(JNIEnv *pEnv, StoreWatcher *pWatcher, StoreEntry *pEntry) {
@@ -155,6 +162,9 @@ void processEntry(JNIEnv *pEnv, StoreWatcher *pWatcher, StoreEntry *pEntry) {
             processEntryColor(pEnv, pWatcher, pEntry);
         }
             break;
+        default: {
+
+        }
     }
 }
 
@@ -188,9 +198,9 @@ void processEntryColor(JNIEnv *pEnv, StoreWatcher *pWatcher, StoreEntry *pEntry)
 }
 
 void deleteGlobalRef(JNIEnv *pEnv, jobject *pRef) {
-    if (*pRef != NULL) {
+    if (*pRef != nullptr) {
         pEnv->DeleteGlobalRef(*pRef);
-        *pRef = NULL;
+        *pRef = nullptr;
     }
 }
 
@@ -200,7 +210,7 @@ void stopWatcher(JNIEnv *pEnv, StoreWatcher *pWatcher) {
         pEnv->MonitorEnter(pWatcher->mLock);
         pWatcher->mState = STATE_KO;
         pEnv->MonitorExit(pWatcher->mLock);
-        pthread_join(pWatcher->mThread, NULL);
+        pthread_join(pWatcher->mThread, nullptr);
         deleteGlobalRef(pEnv, &pWatcher->mLock);
         deleteGlobalRef(pEnv, &pWatcher->mColor);
         deleteGlobalRef(pEnv, (jobject *) &pWatcher->ClassStore);
@@ -209,7 +219,7 @@ void stopWatcher(JNIEnv *pEnv, StoreWatcher *pWatcher) {
 }
 
 void makeGlobalRef(JNIEnv *pEnv, jobject *pRef) {
-    if (*pRef != NULL) {
+    if (*pRef != nullptr) {
         jobject lGlobalRef = pEnv->NewGlobalRef(*pRef);
         // Локальная ссылка больше не нужна.
         pEnv->DeleteLocalRef(*pRef);

@@ -2,8 +2,8 @@
 // Created by max on 2/27/18.
 //
 
-#ifndef STORE_STOREWATCHER_H_H
-#define STORE_STOREWATCHER_H_H
+#ifndef STORE_STOREWATCHER_H
+#define STORE_STOREWATCHER_H
 
 #include "store_support.h"
 #include "jni.h"
@@ -52,4 +52,4 @@ void processEntryString(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry
 
 void processEntryColor(JNIEnv* pEnv, StoreWatcher* pWatcher, StoreEntry* pEntry);
 
-#endif //STORE_STOREWATCHER_H_H
+#endif
