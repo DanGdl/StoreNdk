@@ -1,8 +1,8 @@
 #include "store_support.h"
-#include <string.h>
+#include <cstring>
 
 int32_t isEntryValid(JNIEnv* pEnv, const StoreEntry* pEntry, const StoreType pType) {
-    if (pEntry == NULL) {
+    if (pEntry == nullptr) {
         throwNotExistingKeyException(pEnv);
         return 0;
     } else if (pEntry->mType != pType) {
@@ -13,38 +13,37 @@ int32_t isEntryValid(JNIEnv* pEnv, const StoreEntry* pEntry, const StoreType pTy
 }
 
 StoreEntry* findEntry(JNIEnv* pEnv, const Store* pStore, const jstring pKey) {
-    StoreEntry *entry = (StoreEntry *) pStore->mEntries;
+    auto *entry = (StoreEntry *) pStore->mEntries;
     const StoreEntry *lEntryEnd = entry + pStore->mLength;
-    const char *lKeyTmp = pEnv->GetStringUTFChars(pKey, NULL);
-    if (lKeyTmp == NULL) {
-        return NULL;
+    const char *lKeyTmp = pEnv->GetStringUTFChars(pKey, nullptr);
+    if (lKeyTmp == nullptr) {
+        return nullptr;
     }
     while ((entry < lEntryEnd) && (strcmp(entry->mKey, lKeyTmp) != 0)) {
         ++entry;
     }
     pEnv->ReleaseStringUTFChars(pKey, lKeyTmp);
-    return (entry == lEntryEnd) ? NULL : entry;
+    return (entry == lEntryEnd) ? nullptr : entry;
 }
 
 StoreEntry* allocateEntry(JNIEnv* pEnv, Store* pStore, const jstring pKey) {
     StoreEntry *lEntry = findEntry(pEnv, pStore, pKey);
-    if (lEntry != NULL) {
-        releaseEntryValue(pEnv, lEntry);
-    }
-    else {
+    if (lEntry == nullptr) {
         if (pStore->mLength >= STORE_MAX_CAPACITY) {
             throwStoreFullException(pEnv);
-            return NULL;
+            return nullptr;
         }
         lEntry = pStore->mEntries + pStore->mLength;
-        const char *lKeyTmp = pEnv->GetStringUTFChars(pKey, NULL);
-        if (lKeyTmp == NULL) {
-            return NULL;
+        const char *lKeyTmp = pEnv->GetStringUTFChars(pKey, nullptr);
+        if (lKeyTmp == nullptr) {
+            return nullptr;
         }
         lEntry->mKey = new char[(strlen(lKeyTmp))];
         strcpy(lEntry->mKey, lKeyTmp);
         pEnv->ReleaseStringUTFChars(pKey, lKeyTmp);
         ++pStore->mLength;
+    } else {
+        releaseEntryValue(pEnv, lEntry);
     }
     return lEntry;
 }
@@ -112,9 +111,10 @@ void releaseEntryValue(JNIEnv* pEnv, const StoreEntry* pEntry) {
             delete[] (pEntry->mValue.mLongArray);
         }break;
 
-        case StoreType_ShortArray:{
+        case StoreType_ShortArray: {
             delete[] (pEntry->mValue.mShortArray);
-        }break;
+        }
+            break;
 
         case StoreType_ColorArray: {
             for (i = 0; i < pEntry->mLength; ++i) {
@@ -137,7 +137,7 @@ void releaseEntryValue(JNIEnv* pEnv, const StoreEntry* pEntry) {
 void throwNotExistingKeyException(JNIEnv *pEnv) {
     jclass lClass = pEnv->FindClass(
             "com/mdgd/storeapp/model/storage/exception/NotExistingKeyException");
-    if (lClass != NULL) {
+    if (lClass != nullptr) {
         pEnv->ThrowNew(lClass, "Key does not exist.");
     }
     pEnv->DeleteLocalRef(lClass);
@@ -146,7 +146,7 @@ void throwNotExistingKeyException(JNIEnv *pEnv) {
 void throwInvalidTypeException(JNIEnv* pEnv) {
     jclass lClass = pEnv->FindClass(
             "com/mdgd/storeapp/model/storage/exception/InvalidTypeException");
-    if (lClass != NULL) {
+    if (lClass != nullptr) {
         pEnv->ThrowNew(lClass, "Wrong type.");
     }
     pEnv->DeleteLocalRef(lClass);
@@ -154,7 +154,7 @@ void throwInvalidTypeException(JNIEnv* pEnv) {
 
 void throwStoreFullException(JNIEnv* pEnv) {
     jclass lClass = pEnv->FindClass("com/mdgd/storeapp/model/storage/exception/StoreFullException");
-    if (lClass != NULL) {
+    if (lClass != nullptr) {
         pEnv->ThrowNew(lClass, "Store is full.");
     }
     pEnv->DeleteLocalRef(lClass);

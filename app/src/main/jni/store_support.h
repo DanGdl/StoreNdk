@@ -67,4 +67,4 @@ void throwNotExistingKeyException(JNIEnv* pEnv);
 
 void throwStoreFullException(JNIEnv* pEnv);
 
-#endif //STORE_STRORE_H
+#endif
